@@ -21,28 +21,20 @@
 # limitations under the License.
 #
 
-class Chef::Recipe
-  include Mod_Network_interfaces
-end
-
 # Reset ifaces order on each run
 node.default["network_interfaces"]["order"]=[]
 
 ruby_block "Merge interfaces" do
   block do
-    class  Chef::Resource::RubyBlock
-      include Mod_Network_interfaces
-    end
-    if debian_before_or_squeeze? || ubuntu_before_or_natty?
-      File.open("/etc/network/interfaces", "w") do |ifaces|
-        ( ["/etc/network/interfaces.tpl"] + node["network_interfaces"]["order"].map{|ifile| "/etc/network/interfaces.d/#{ifile}"} ).uniq.compact.each do |ifile|
-          File.open(ifile) do |f|
-            f.each_line { |line| ifaces.write(line) }
-          end
+    File.open("/etc/network/interfaces", "w") do |ifaces|
+      ( ["/etc/network/interfaces.tpl"] + node["network_interfaces"]["order"].map{|ifile| "/etc/network/interfaces.d/#{ifile}"} ).uniq.compact.each do |ifile|
+        File.open(ifile) do |f|
+          f.each_line { |line| ifaces.write(line) }
         end
       end
     end
   end
+  only_if { debian_before_or_squeeze? or ubuntu_before_or_natty? }
   action :nothing
 end
 
@@ -64,18 +56,17 @@ end
 
 ruby_block "Fix interfaces include" do
   block do
-    class  Chef::Resource::RubyBlock
-      include Mod_Network_interfaces
-    end
     unless debian_before_or_squeeze? || ubuntu_before_or_natty?
-      insert_line_if_no_match("/etc/network/interfaces", "^source /etc/network/interfaces.d/*", 'source /etc/network/interfaces.d/*')
+      file = Chef::Util::FileEdit.new("/etc/network/interfaces")
+      file.insert_line_if_no_match("^source /etc/network/interfaces.d/*", 'source /etc/network/interfaces.d/*')
+      file.write_file
     end
   end
 end
 
 directory "/etc/network/interfaces.d" do
-	owner "root"
-	group "root"
-	mode "0644"
-	action :create
+  owner "root"
+  group "root"
+  mode "0644"
+  action :create
 end
