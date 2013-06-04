@@ -27,3 +27,6 @@ attribute :pre_down, :kind_of => String
 attribute :down, :kind_of => String
 attribute :post_down, :kind_of => String
 attribute :custom, :kind_of => Hash
+attribute :priority, :kind_of => Integer, :default => 50
+
+attr_accessor :exists

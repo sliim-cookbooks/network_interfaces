@@ -21,6 +21,8 @@
 # limitations under the License.
 #
 
+require "pathname"
+
 # Reset ifaces order on each run
 node.default["network_interfaces"]["order"]=[]
 
@@ -34,6 +36,18 @@ ruby_block "Merge interfaces" do
       end
     end
   end
+  only_if { debian_before_or_squeeze? or ubuntu_before_or_natty? }
+  action :nothing
+end
+
+template "/etc/network/interfaces" do
+  source "interfaces.merged.erb"
+  owner "root"
+  group "root"
+  mode "0644"
+  variables(
+    :files => ["/etc/network/interfaces.tpl"] + Array(Pathname.new("/etc/network/interfaces.d").children.select { |c| c.file? }.collect { |p| p.to_s })
+  )
   only_if { debian_before_or_squeeze? or ubuntu_before_or_natty? }
   action :nothing
 end
