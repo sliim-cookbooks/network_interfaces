@@ -1,22 +1,15 @@
 action :save do
-  
-  if new_resource.bridge and new_resource.bridge.class != Array
-    new_resource.bridge = [ "none" ]
-  end
+  new_resource.bridge = [ "none" ] if new_resource.bridge and new_resource.bridge.class != Array
 
   if new_resource.vlan_dev || new_resource.device =~ /(eth|bond|wlan)[0-9]+\.[0-9]+/
     package "vlan"
     modules "8021q"
-
   end
 
-  if new_resource.bond and new_resource.bond.class != Array
-    new_resource.bond = [ "none" ]
-  end
+  new_resource.bond = [ "none" ] if new_resource.bond and new_resource.bond.class != Array
 
   if new_resource.bond
     package "ifenslave-2.6"
-
     modules "bonding"
   end
 
@@ -72,7 +65,7 @@ action :save do
       :custom => get_value(:custom)
     )
     notifies :run, "execute[restart #{new_resource.name}]", :immediately
-    notifies :create, "ruby_block[Merge interfaces]", :delayed
+    notifies :create, "template[interface merged]", :delayed unless node["network_interface"]["support_d"]
   end
 end
 
@@ -85,7 +78,7 @@ action :remove do
   file interface_file do
     action :delete
     notifies :run, "execute[if_down #{new_resource.name}]", :immediately
-    notifies :create, "ruby_block[Merge interfaces]", :delayed
+    notifies :create, "template[interface merged]", :delayed unless node["network_interface"]["support_d"]
   end
 end
 
