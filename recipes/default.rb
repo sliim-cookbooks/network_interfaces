@@ -32,7 +32,10 @@ legacy_debian = ((platform?('debian') &&
 ruby_block 'Merge interfaces' do
   block do
     File.open('/etc/network/interfaces', 'w') do |ifaces|
-      (['/etc/network/interfaces.tpl'] + node['network_interfaces']['order'].map { |ifile| "/etc/network/interfaces.d/#{ifile}" }).uniq.compact.each do |ifile|
+      (
+        ['/etc/network/interfaces.tpl'] +
+        node['network_interfaces']['order'].map { |ifile| "/etc/network/interfaces.d/#{ifile}" }
+      ).uniq.compact.each do |ifile|
         File.open(ifile) do |f|
           f.each_line { |line| ifaces.write(line) }
         end
