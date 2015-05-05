@@ -44,6 +44,7 @@ action :save do
       auto:         Chef::Recipe::NetworkInterfaces.value(:onboot,     new_resource.device, new_resource, node),
       type:         type,
       device:       new_resource.device,
+      family:       Chef::Recipe::NetworkInterfaces.value(:family,     new_resource.device, new_resource, node),
       address:      Chef::Recipe::NetworkInterfaces.value(:target,     new_resource.device, new_resource, node),
       network:      Chef::Recipe::NetworkInterfaces.value(:network,    new_resource.device, new_resource, node),
       netmask:      Chef::Recipe::NetworkInterfaces.value(:mask,       new_resource.device, new_resource, node),
