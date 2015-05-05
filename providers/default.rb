@@ -17,11 +17,11 @@ action :save do
   end
 
   if new_resource.bootproto == 'dhcp'
-    type = 'dhcp'
+    method = 'dhcp'
   elsif !new_resource.target
-    type = 'manual'
+    method = 'manual'
   else
-    type = 'static'
+    method = 'static'
   end
 
   package 'ifmetric' if Chef::Recipe::NetworkInterfaces.value(:metric, new_resource.device, new_resource, node)
@@ -42,7 +42,7 @@ action :save do
     mode '0644'
     variables(
       auto:         Chef::Recipe::NetworkInterfaces.value(:onboot,     new_resource.device, new_resource, node),
-      type:         type,
+      method: Chef::Recipe::NetworkInterfaces.value(:method,     new_resource.device, new_resource, node) || method,
       device:       new_resource.device,
       family:       Chef::Recipe::NetworkInterfaces.value(:family,     new_resource.device, new_resource, node),
       address:      Chef::Recipe::NetworkInterfaces.value(:target,     new_resource.device, new_resource, node),
