@@ -25,7 +25,7 @@
 node.set['network_interfaces']['order'] = []
 
 if (platform?('debian') && node['platform_version'].to_f < 6.0) ||
-    (platform?('ubuntu') && node['platform_version'].to_f < 10.04)
+   (platform?('ubuntu') && node['platform_version'].to_f < 10.04)
   fail "This platform version (#{node['platform_version']}) is not supported " \
     'by this cookbook'
 end
@@ -51,7 +51,7 @@ file '/etc/network/interfaces' do
     "source /etc/network/interfaces.d/*\n"
   not_if do
     node['network_interfaces']['replace_orig'] ||
-    File.read('/etc/network/interfaces') =~ %r{^source /etc/network/interfaces.d/\*$}
+      File.read('/etc/network/interfaces') =~ %r{^source /etc/network/interfaces.d/\*$}
   end
   action :create
 end

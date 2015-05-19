@@ -17,8 +17,6 @@ class Chef
         else
           if conf(interfaces, workingnode).key?(key)
             conf(interfaces, workingnode)[key]
-          else
-            nil
           end
         end
       end

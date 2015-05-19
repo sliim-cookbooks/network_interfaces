@@ -1,5 +1,4 @@
 action :save do
-
   node.set['network_interfaces']['order'] = (node['network_interfaces']['order'] || []) + [new_resource.device]
 
   new_resource.bridge = ['none'] if new_resource.bridge && new_resource.bridge.class != Array
