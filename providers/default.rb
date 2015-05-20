@@ -1,3 +1,9 @@
+def whyrun_supported?
+  true
+end
+
+use_inline_resources if defined?(use_inline_resources)
+
 action :save do
   node.set['network_interfaces']['order'] = (node['network_interfaces']['order'] || []) + [new_resource.device]
 
@@ -36,10 +42,16 @@ action :save do
 
   package 'bridge-utils' if new_resource.bridge
 
-  if_up = execute "if_up #{new_resource.name}" do
+  execute "if_up #{new_resource.name}" do
     command "ifdown #{new_resource.device} -i /etc/network/interfaces.d/#{new_resource.device} ; ifup #{new_resource.device} -i /etc/network/interfaces.d/#{new_resource.device}"
     only_if "ifdown -n #{new_resource.device} -i /etc/network/interfaces.d/#{new_resource.device} ; ifup -n #{new_resource.device} -i /etc/network/interfaces.d/#{new_resource.device}"
     action :nothing
+  end
+
+  append_if_no_line "insert auto for #{new_resource.device}" do
+    line "auto #{new_resource.device}"
+    path '/etc/network/interfaces.d/00interfaces'
+    only_if { Chef::Recipe::NetworkInterfaces.value(:onboot, new_resource.device, new_resource, node) }
   end
 
   template "/etc/network/interfaces.d/#{new_resource.filename}" do
@@ -49,7 +61,6 @@ action :save do
     group 'root'
     mode '0644'
     variables(
-      auto:         Chef::Recipe::NetworkInterfaces.value(:onboot,     new_resource.device, new_resource, node),
       method: Chef::Recipe::NetworkInterfaces.value(:method,     new_resource.device, new_resource, node) || method,
       device:       new_resource.device,
       family:       Chef::Recipe::NetworkInterfaces.value(:family,     new_resource.device, new_resource, node),
@@ -70,21 +81,24 @@ action :save do
     )
     notifies :run, "execute[if_up #{new_resource.name}]", :immediately
   end
-
-  new_resource.updated_by_last_action(if_up.updated_by_last_action?)
 end
 
 action :remove do
-  if_down = execute "if_down #{new_resource.name}" do
+  execute "if_down #{new_resource.name}" do
     command "ifdown #{Chef::Recipe::NetworkInterfaces.value(:device, new_resource.device, new_resource, node)} -i /etc/network/interfaces.d/#{Chef::Recipe::NetworkInterfaces.value(:device, new_resource.device, new_resource, node)}"
     only_if "ifdown -n #{Chef::Recipe::NetworkInterfaces.value(:device, new_resource.device, new_resource, node)} -i /etc/network/interfaces.d/#{Chef::Recipe::NetworkInterfaces.value(:device, new_resource.device, new_resource, node)}"
+    action :nothing
+  end
+
+  delete_lines "auto #{new_resource.device}" do
+    path '/etc/network/interfaces.d/00interfaces'
+    pattern "^auto #{new_resource.device}"
+    action :nothing
   end
 
   file "/etc/network/interfaces.d/#{new_resource.filename}" do
     action :delete
     notifies :run, "execute[if_down #{new_resource.name}]", :immediately
-    notifies :create, 'ruby_block[Merge interfaces]', :delayed
+    notifies :edit, "delete_lines[auto #{new_resource.device}]", :immediately
   end
-
-  new_resource.updated_by_last_action(if_down.updated_by_last_action?)
 end
