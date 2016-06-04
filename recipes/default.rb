@@ -24,8 +24,7 @@
 # Reset ifaces order on each run
 node.set['network_interfaces']['order'] = []
 
-if (platform?('debian') && node['platform_version'].to_f < 6.0) ||
-    (platform?('ubuntu') && node['platform_version'].to_f < 10.04)
+unless platform?('debian') || platform?('ubuntu')
   fail "This platform version (#{node['platform_version']}) is not supported " \
     'by this cookbook'
 end
