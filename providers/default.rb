@@ -28,9 +28,15 @@ action :save do
 
   package 'bridge-utils' if new_resource.bridge
 
+  if_down = execute "if_down #{new_resource.name}" do
+    command "ifdown #{new_resource.device} -i /etc/network/interfaces.d/#{new_resource.device}"
+    ignore_failure true
+    action :nothing
+  end
+
   if_up = execute "if_up #{new_resource.name}" do
-    command "ifdown #{new_resource.device} -i /etc/network/interfaces.d/#{new_resource.device} ; ifup #{new_resource.device} -i /etc/network/interfaces.d/#{new_resource.device}"
-    only_if "ifdown -n #{new_resource.device} -i /etc/network/interfaces.d/#{new_resource.device} ; ifup -n #{new_resource.device} -i /etc/network/interfaces.d/#{new_resource.device}"
+    command "ifup #{new_resource.device} -i /etc/network/interfaces.d/#{new_resource.device}"
+    ignore_failure true
     action :nothing
   end
 
@@ -64,9 +70,11 @@ action :save do
       post_down:    Chef::Recipe::NetworkInterfaces.value(:post_down,  new_resource.device, new_resource, node),
       custom:       Chef::Recipe::NetworkInterfaces.value(:custom,     new_resource.device, new_resource, node)
     )
+    notifies :run, "execute[if_down #{new_resource.name}]", :immediately
     notifies :run, "execute[if_up #{new_resource.name}]", :immediately
   end
 
+  new_resource.updated_by_last_action(if_down.updated_by_last_action?)
   new_resource.updated_by_last_action(if_up.updated_by_last_action?)
 end
 
